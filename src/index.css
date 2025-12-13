@@ -213,6 +213,23 @@
     0%, 100% { transform: translateY(0); opacity: 1; }
     50% { transform: translateY(8px); opacity: 0.5; }
   }
+  
+  /* Cinematic border light animation */
+  .animate-border-light {
+    --border-angle: 0deg;
+    animation: border-rotate 4s linear infinite;
+  }
+  
+  @keyframes border-rotate {
+    0% { --border-angle: 0deg; }
+    100% { --border-angle: 360deg; }
+  }
+  
+  @property --border-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+  }
 }
 
 @layer utilities {
