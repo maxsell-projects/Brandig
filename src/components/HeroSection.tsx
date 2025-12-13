@@ -12,9 +12,7 @@ const HeroSection = () => {
       {/* Content */}
       <div className="content-container text-center z-10 flex flex-col items-center">
         {/* Overline */}
-        <p className="text-xs md:text-sm tracking-[0.3em] uppercase text-muted-foreground mb-6 md:mb-8 fade-in-up stagger-1">
-          Brand Book Digital
-        </p>
+        
         
         {/* Main Title */}
         <h1 className="font-heading text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold leading-[0.9] tracking-tight mb-6 md:mb-8 fade-in-up stagger-2">
@@ -24,16 +22,12 @@ is Here
         </h1>
         
         {/* Subtitle */}
-        <p className="text-lg md:text-xl lg:text-2xl text-muted-foreground max-w-xl md:max-w-2xl leading-relaxed mb-8 md:mb-12 fade-in-up stagger-3">
-          Uma experiência visual e sensorial que transcende o comum. 
-          <span className="hidden md:inline"><br /></span>
-          {' '}Onde a marca encontra a sua essência.
-        </p>
+        
         
         {/* Agency Credit */}
         <div className="flex items-center gap-3 text-sm text-muted-foreground fade-in-up stagger-4">
           <span className="w-8 h-px bg-border" />
-          <span className="tracking-widest uppercase text-xs">Por Studio Sensorial</span>
+          <span className="tracking-widest uppercase text-xs">POR MAXSELL ADVIDOR</span>
           <span className="w-8 h-px bg-border" />
         </div>
       </div>
