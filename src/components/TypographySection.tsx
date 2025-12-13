@@ -3,8 +3,15 @@ import { useInView } from '../hooks/useInView';
 const TypographySection = () => {
   const { ref, isInView } = useInView({ threshold: 0.2 });
 
-  const weights = [
+  const primaryWeights = [
     { name: 'Light', weight: 300 },
+    { name: 'Regular', weight: 400 },
+    { name: 'Medium', weight: 500 },
+    { name: 'Semibold', weight: 600 },
+    { name: 'Bold', weight: 700 },
+  ];
+
+  const secondaryWeights = [
     { name: 'Regular', weight: 400 },
     { name: 'Medium', weight: 500 },
     { name: 'Semibold', weight: 600 },
@@ -46,7 +53,7 @@ const TypographySection = () => {
           <h3 className="font-heading text-xl md:text-2xl font-medium text-accent mb-8">Pesos Tipográficos</h3>
           
           <div className="space-y-4">
-            {weights.map((weight) => (
+            {primaryWeights.map((weight) => (
               <div 
                 key={weight.name}
                 className="p-4 md:p-6 rounded-xl bg-card border border-border/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
@@ -66,7 +73,7 @@ const TypographySection = () => {
         </div>
 
         {/* Secondary Font */}
-        <div className={`transition-all duration-700 delay-300 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+        <div className={`mb-16 md:mb-24 transition-all duration-700 delay-300 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           <h3 className="font-heading text-xl md:text-2xl font-medium text-accent mb-8">Fonte Secundária</h3>
           
           <div className="p-8 md:p-12 rounded-2xl bg-card border border-border/50">
@@ -78,6 +85,30 @@ const TypographySection = () => {
               Utilizada para corpo de texto, legendas e informação secundária. 
               A sua legibilidade e neutralidade complementam a personalidade da fonte principal.
             </p>
+          </div>
+        </div>
+
+        {/* Secondary Font Weights */}
+        <div className={`transition-all duration-700 delay-400 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          <h3 className="font-heading text-xl md:text-2xl font-medium text-accent mb-8">Pesos Tipográficos — Inter</h3>
+          
+          <div className="space-y-4">
+            {secondaryWeights.map((weight) => (
+              <div 
+                key={weight.name}
+                className="p-4 md:p-6 rounded-xl bg-card border border-border/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+              >
+                <span 
+                  className="font-body text-2xl md:text-3xl"
+                  style={{ fontWeight: weight.weight }}
+                >
+                  Sensorial
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  {weight.name} — {weight.weight}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
