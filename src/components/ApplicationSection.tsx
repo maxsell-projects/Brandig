@@ -72,7 +72,7 @@ const ApplicationSection = () => {
         }
       }}
       className="relative"
-      style={{ height: `${mockups.length * 100}vh` }}
+      style={{ height: `${(mockups.length + 1) * 50}vh` }}
     >
       {/* Sticky Container */}
       <div className="sticky top-0 h-screen w-full flex overflow-hidden">
