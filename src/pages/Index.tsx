@@ -3,7 +3,7 @@ import Navigation from '@/components/Navigation';
 import HeroSection from '@/components/HeroSection';
 import IndexSection from '@/components/IndexSection';
 import IntroductionSection from '@/components/IntroductionSection';
-import IntroductionSection2 from '@/components/IntroductionSection2';
+import AboutBrandSection from '@/components/AboutBrandSection';
 import BrandSection from '@/components/BrandSection';
 import IdentitySection from '@/components/IdentitySection';
 import TypographySection from '@/components/TypographySection';
@@ -48,7 +48,7 @@ const Index = () => {
         </div>
         
         <IntroductionSection />
-        <IntroductionSection2 />
+        <AboutBrandSection />
         <BrandSection />
         <IdentitySection />
         <TypographySection />
