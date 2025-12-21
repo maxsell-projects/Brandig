@@ -1,8 +1,6 @@
 import { create } from 'zustand'
-import { api } from '@/lib/api' // Importando nossa conexão com o Laravel
-import { toast } from "sonner"   // Para avisos visuais de sucesso/erro
-
-// --- Interfaces das Seções ---
+import { api } from '@/lib/api'
+import { toast } from "sonner"
 
 interface HeroConfig {
   titleLine1: string
@@ -43,24 +41,17 @@ interface BrandSectionConfig {
 interface IdentityConfig {
   sectionNumber: string
   title: string
-  
-  // Logos
   logoSectionTitle: string
   primaryLogoText: string
   primaryLogoLabel: string
   primaryLogoImage?: string 
-
   invertedLogoText: string
   invertedLogoLabel: string
   invertedLogoImage?: string 
-
-  // Área de Proteção
   clearSpaceTitle: string
   clearSpaceLogoText: string
   clearSpaceDescription: string
   clearSpaceImage?: string 
-
-  // Dimensões
   minSizeTitle: string
   minSizePrintLabel: string
   minSizePrintValue: string
@@ -78,12 +69,14 @@ interface TypographyConfig {
   title: string
   primaryFontTitle: string
   primaryFontName: string
+  primaryFontUrl?: string
   primaryFontAlphabet: string
   primaryFontCharacters: string
   weightsTitle: string
   primaryWeights: FontWeight[]
   secondaryFontTitle: string
   secondaryFontName: string
+  secondaryFontUrl?: string
   secondaryFontAlphabet: string
   secondaryFontDescription: string
   secondaryWeightsTitle: string
@@ -156,12 +149,8 @@ interface NavigationConfig {
   logoText: string
 }
 
-// --- Interface Principal do Estado ---
-
 interface BrandState {
   isEditorMode: boolean
-  
-  // Seções
   hero: HeroConfig
   introduction: IntroductionConfig
   aboutBrand: AboutBrandConfig
@@ -174,7 +163,6 @@ interface BrandState {
   credits: CreditsConfig
   navigation: NavigationConfig
   
-  // Actions de UI
   toggleEditorMode: () => void
   updateHero: (data: Partial<HeroConfig>) => void
   updateIntroduction: (data: Partial<IntroductionConfig>) => void
@@ -188,17 +176,13 @@ interface BrandState {
   updateCredits: (data: Partial<CreditsConfig>) => void
   updateNavigation: (data: Partial<NavigationConfig>) => void
 
-  // Actions de API (Backend)
   loadProject: (slug: string) => Promise<void>
   saveProject: (slug: string) => Promise<void>
 }
 
-// Note o uso de (set, get) aqui para permitir ler o estado atual no saveProject
 export const useBrandStore = create<BrandState>((set, get) => ({
   isEditorMode: true,
   
-  // --- Dados Iniciais (Padrão) ---
-
   hero: {
     titleLine1: 'Your branding, your future,',
     titleLine2: 'is Here',
@@ -251,21 +235,17 @@ export const useBrandStore = create<BrandState>((set, get) => ({
   identity: {
     sectionNumber: '03',
     title: 'Identidade Visual',
-    
     logoSectionTitle: 'Logótipo',
     primaryLogoText: 'SENSORIAL',
     primaryLogoLabel: 'Versão Principal',
     primaryLogoImage: '', 
-
     invertedLogoText: 'SENSORIAL',
     invertedLogoLabel: 'Versão Invertida',
     invertedLogoImage: '', 
-
     clearSpaceTitle: 'Área de Proteção',
     clearSpaceLogoText: 'SENSORIAL',
     clearSpaceDescription: 'A letra "S" define a área mínima de proteção em redor do logótipo.',
     clearSpaceImage: '', 
-
     minSizeTitle: 'Dimensões Mínimas',
     minSizePrintLabel: 'Impressão',
     minSizePrintValue: 'Mínimo 25mm',
@@ -278,6 +258,7 @@ export const useBrandStore = create<BrandState>((set, get) => ({
     title: 'Tipografia',
     primaryFontTitle: 'Fonte Principal',
     primaryFontName: 'Outfit',
+    primaryFontUrl: '',
     primaryFontAlphabet: 'Aa Bb Cc',
     primaryFontCharacters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ\nabcdefghijklmnopqrstuvwxyz\n0123456789',
     weightsTitle: 'Pesos Tipográficos',
@@ -290,6 +271,7 @@ export const useBrandStore = create<BrandState>((set, get) => ({
     ],
     secondaryFontTitle: 'Fonte Secundária',
     secondaryFontName: 'Inter',
+    secondaryFontUrl: '',
     secondaryFontAlphabet: 'Aa Bb Cc',
     secondaryFontDescription: 'Utilizada para corpo de texto, legendas e informação secundária. A sua legibilidade e neutralidade complementam a personalidade da fonte principal.',
     secondaryWeightsTitle: 'Pesos Tipográficos — Inter',
@@ -439,8 +421,6 @@ export const useBrandStore = create<BrandState>((set, get) => ({
     logoText: 'SENSORIAL'
   },
 
-  // --- Funções de Atualização (UI) ---
-
   toggleEditorMode: () => set((state) => ({ isEditorMode: !state.isEditorMode })),
   
   updateHero: (data) => set((state) => ({ hero: { ...state.hero, ...data } })),
@@ -455,17 +435,15 @@ export const useBrandStore = create<BrandState>((set, get) => ({
   updateCredits: (data) => set((state) => ({ credits: { ...state.credits, ...data } })),
   updateNavigation: (data) => set((state) => ({ navigation: { ...state.navigation, ...data } })),
 
-  // --- Funções de Integração (API) ---
-
   loadProject: async (slug: string) => {
     try {
       const response = await api.get(`/project/${slug}`);
-      const settings = response.data.settings; // O Laravel retorna { settings: { ... } }
+      const settings = response.data.settings;
       
       if (settings) {
         set((state) => ({
           ...state,
-          ...settings // Substitui o estado atual pelo que veio do banco
+          ...settings
         }));
         console.log("Projeto carregado via API");
       }
@@ -475,9 +453,8 @@ export const useBrandStore = create<BrandState>((set, get) => ({
   },
 
   saveProject: async (slug: string) => {
-    const state = get(); // Pega o estado atual completo
+    const state = get();
     
-    // Montamos o objeto limpo para salvar (sem funções)
     const projectData = {
       hero: state.hero,
       introduction: state.introduction,
