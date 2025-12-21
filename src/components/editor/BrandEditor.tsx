@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useParams } from "react-router-dom"; // IMPORTANTE: Para pegar o slug da URL
 import { useBrandStore } from "@/store/useBrandStore";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -77,13 +78,18 @@ const FileUpload = ({ label, value, onChange, accept = "image/*" }: { label: str
 };
 
 export const BrandEditor = () => {
+  const { slug } = useParams(); // PEGA O SLUG DA URL (ex: /p/nike -> slug="nike")
   const store = useBrandStore();
   const [isOpen, setIsOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async () => {
     setIsSaving(true);
-    await store.saveProject('demo-brand');
+    
+    // Usa o slug da URL se existir, senão usa 'demo-brand' como fallback
+    const projectSlug = slug || 'demo-brand';
+    
+    await store.saveProject(projectSlug);
     setIsSaving(false);
     setIsOpen(false);
   };

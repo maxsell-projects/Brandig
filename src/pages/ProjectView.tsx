@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useParams } from 'react-router-dom'; // Importante para ler a URL
 import Navigation from '@/components/Navigation';
 import HeroSection from '@/components/HeroSection';
 import IndexSection from '@/components/IndexSection';
@@ -15,15 +16,24 @@ import AmbientGlow from '@/components/AmbientGlow';
 import { useAudio } from '@/hooks/useAudio';
 import { BrandEditor } from '@/components/editor/BrandEditor';
 import { useBrandStore } from '@/store/useBrandStore';
+import { useAuthStore } from '@/store/useAuthStore'; // Importante para verificar o login
 
-const Index = () => {
+const ProjectView = () => {
+  // 1. Pegar o slug da URL (ex: site.com/p/nike -> slug = "nike")
+  const { slug } = useParams();
+
   const { isPlaying, toggle } = useAudio('/ambient-sound.mp3');
   const loadProject = useBrandStore((state) => state.loadProject);
+  
+  // 2. Verificar se o usuário é admin/logado
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   useEffect(() => {
-    // Carrega os dados do backend assim que a página monta
-    loadProject('demo-brand');
-  }, [loadProject]);
+    // 3. Carregar o projeto baseado na URL (se existir slug)
+    if (slug) {
+      loadProject(slug);
+    }
+  }, [slug, loadProject]);
 
   return (
     <div className="relative min-h-screen bg-background">
@@ -66,9 +76,10 @@ const Index = () => {
         </footer>
       </main>
 
-      <BrandEditor />
+      {/* 4. Mostrar o Editor APENAS se estiver logado */}
+      {isAuthenticated && <BrandEditor />}
     </div>
   );
 };
 
-export default Index;
+export default ProjectView;
