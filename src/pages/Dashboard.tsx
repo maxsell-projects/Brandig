@@ -2,9 +2,19 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Plus, ExternalLink, LogOut, PenTool, Layout, Calendar } from 'lucide-react';
+import { Plus, ExternalLink, LogOut, PenTool, Layout, Calendar, Trash2, Loader2 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Project {
   id: number;
@@ -16,6 +26,9 @@ interface Project {
 const Dashboard = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [projectToDelete, setProjectToDelete] = useState<number | null>(null); // Estado para controlar qual projeto será deletado
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const navigate = useNavigate();
   const logout = useAuthStore(state => state.logout);
 
@@ -37,12 +50,28 @@ const Dashboard = () => {
   };
 
   const createNew = () => {
-    // Idealmente seria um Modal do ShadCN, mas o prompt funciona rápido para MVP
     const name = prompt("Nome do Cliente / Projeto:");
     if (name) {
       const slug = name.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
       navigate(`/p/${slug}`); 
       toast.success(`Iniciando projeto: ${name}`);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!projectToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await api.delete(`/projects/${projectToDelete}`);
+      setProjects(projects.filter(p => p.id !== projectToDelete));
+      toast.success("Projeto excluído com sucesso.");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao excluir o projeto.");
+    } finally {
+      setIsDeleting(false);
+      setProjectToDelete(null);
     }
   };
 
@@ -104,6 +133,22 @@ const Dashboard = () => {
           {projects.map(p => (
             <div key={p.id} className="group relative bg-card border border-border/40 rounded-xl overflow-hidden hover:shadow-2xl hover:border-accent/30 transition-all duration-300 flex flex-col">
               
+              {/* Botão de Excluir (Aparece no Hover) */}
+              <div className="absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button 
+                  size="icon" 
+                  variant="destructive" 
+                  className="h-8 w-8 rounded-full shadow-md"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setProjectToDelete(p.id);
+                  }}
+                >
+                  <Trash2 size={14} />
+                </Button>
+              </div>
+
               {/* Capa "Fake" com Gradiente */}
               <div className="h-32 bg-gradient-to-br from-muted via-muted/50 to-background p-6 flex items-end relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full blur-[40px] -mr-10 -mt-10 transition-opacity group-hover:opacity-100 opacity-50" />
@@ -130,9 +175,9 @@ const Dashboard = () => {
                     </Button>
                   </Link>
                   <a href={`/p/${p.slug}`} target="_blank" rel="noreferrer" className="w-full">
-                     <Button variant="outline" className="w-full">
-                       <ExternalLink size={14} className="mr-2"/> Visualizar
-                     </Button>
+                      <Button variant="outline" className="w-full">
+                        <ExternalLink size={14} className="mr-2"/> Visualizar
+                      </Button>
                   </a>
                 </div>
 
@@ -142,6 +187,30 @@ const Dashboard = () => {
         </div>
 
       </main>
+
+      {/* Modal de Confirmação de Exclusão */}
+      <AlertDialog open={!!projectToDelete} onOpenChange={() => setProjectToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Isso excluirá permanentemente o projeto e removerá seus dados dos servidores.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={(e) => { e.preventDefault(); handleDelete(); }} 
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
+            >
+              {isDeleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Trash2 className="w-4 h-4 mr-2" />}
+              {isDeleting ? "Excluindo..." : "Excluir Projeto"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
 };

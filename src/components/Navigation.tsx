@@ -46,9 +46,18 @@ const Navigation = ({ onSoundToggle, isSoundEnabled }: NavigationProps) => {
           <a 
             href="#hero" 
             onClick={(e) => { e.preventDefault(); scrollToSection('#hero'); }}
-            className="font-heading font-semibold text-lg md:text-xl tracking-tight text-foreground hover:text-accent transition-colors duration-300"
+            // ADICIONADO: 'flex items-center gap-3' para alinhar imagem e texto lado a lado
+            className="flex items-center gap-3 font-heading font-semibold text-lg md:text-xl tracking-tight text-foreground hover:text-accent transition-colors duration-300"
           >
-            {navigation.logoText}
+            {/* Imagem (Se existir) */}
+            {navigation.logoImage && (
+              <img src={navigation.logoImage} alt={navigation.logoText} className="h-8 md:h-10 w-auto object-contain" />
+            )}
+            
+            {/* Texto (Se não tiver imagem OU se a opção 'showBoth' estiver ativada) */}
+            {(navigation.showBoth || !navigation.logoImage) && (
+              <span>{navigation.logoText}</span>
+            )}
           </a>
 
           <div className="hidden md:flex items-center gap-8">

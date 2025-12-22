@@ -39,11 +39,12 @@ const IntroductionSection = () => {
                   className="flex items-center gap-4 group cursor-pointer"
                   style={{ transitionDelay: `${(index + 3) * 100}ms` }}
                 >
-                  <span className="text-xs text-muted-foreground font-mono">
-                    {String(index + 1).padStart(2, '0')}
+                  {/* AJUSTE: shrink-0 impede que o número amasse, w-8 garante alinhamento */}
+                  <span className="text-xs text-muted-foreground font-mono shrink-0 w-8">
+                    {item.number}
                   </span>
                   <span className="text-base md:text-lg text-foreground group-hover:text-accent transition-colors duration-300">
-                    {item}
+                    {item.text}
                   </span>
                 </li>
               ))}

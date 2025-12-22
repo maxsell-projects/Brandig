@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom"; // IMPORTANTE: Para pegar o slug da URL
+import { useParams } from "react-router-dom";
 import { useBrandStore } from "@/store/useBrandStore";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,13 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Settings, Save, Palette, Type, Layout, FileText, Image, Users, Upload, Download, Smartphone, Loader2, Home } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
+import { Settings, Save, Palette, Type, Layout, FileText, Image, Users, Upload, Download, Smartphone, Loader2, Home, Plus, Trash2, List } from "lucide-react"; // Adicionei List
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Switch } from "@/components/ui/switch";
 import { api } from "@/lib/api"; 
 import { toast } from "sonner"; 
 
-// Componente de Upload Real Conectado ao Laravel
+// Componente de Upload (Mantido igual)
 const FileUpload = ({ label, value, onChange, accept = "image/*" }: { label: string, value?: string, onChange: (val: string) => void, accept?: string }) => {
   const [isUploading, setIsUploading] = useState(false);
 
@@ -22,17 +22,19 @@ const FileUpload = ({ label, value, onChange, accept = "image/*" }: { label: str
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (file.size > 100 * 1024 * 1024) {
+      toast.error("Arquivo muito grande. Limite de 100MB.");
+      return;
+    }
+
     setIsUploading(true);
     const formData = new FormData();
     formData.append('file', file);
 
     try {
-      // Envia para o Backend Laravel
       const response = await api.post('/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      
-      // Recebe a URL pública do Laravel
       onChange(response.data.url);
       toast.success("Arquivo enviado com sucesso!");
     } catch (error) {
@@ -70,25 +72,19 @@ const FileUpload = ({ label, value, onChange, accept = "image/*" }: { label: str
           />
         </div>
       </div>
-      <p className="text-[10px] text-muted-foreground">
-        {value ? 'Arquivo salvo no servidor.' : 'Clique no ícone para fazer upload.'}
-      </p>
     </div>
   );
 };
 
 export const BrandEditor = () => {
-  const { slug } = useParams(); // PEGA O SLUG DA URL (ex: /p/nike -> slug="nike")
+  const { slug } = useParams(); 
   const store = useBrandStore();
   const [isOpen, setIsOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async () => {
     setIsSaving(true);
-    
-    // Usa o slug da URL se existir, senão usa 'demo-brand' como fallback
     const projectSlug = slug || 'demo-brand';
-    
     await store.saveProject(projectSlug);
     setIsSaving(false);
     setIsOpen(false);
@@ -108,27 +104,26 @@ export const BrandEditor = () => {
         </Button>
       </SheetTrigger>
       
-      {/* LARGURA AUMENTADA: w-[96vw] e max-w-[1400px] */}
       <SheetContent className="w-full sm:max-w-none sm:w-[96vw] md:max-w-[1400px] p-0 flex flex-col h-full border-l-2 border-border/50 shadow-2xl">
         
         <SheetHeader className="p-6 border-b bg-muted/5 shrink-0">
           <SheetTitle className="text-2xl font-heading">Editor de Marca</SheetTitle>
-          <SheetDescription>
-            Personalize a identidade visual e o conteúdo. As alterações são salvas na nuvem.
-          </SheetDescription>
+          <SheetDescription>Sistema de Gestão Modular</SheetDescription>
         </SheetHeader>
 
         <ScrollArea className="flex-1 h-full">
           <div className="p-6 pb-24">
-            <Tabs defaultValue="intro" className="w-full">
+            <Tabs defaultValue="hero" className="w-full">
               
-              {/* Navegação Horizontal */}
               <div className="sticky top-0 z-20 bg-background/95 backdrop-blur pb-4 pt-2 -mt-2 mb-8 border-b">
                 <ScrollArea className="w-full whitespace-nowrap">
                   <TabsList className="inline-flex w-auto p-1 bg-muted/50 rounded-xl h-auto border">
-                    <TabsTrigger value="hero" className="gap-2 py-2.5 px-5"><Home className="w-4 h-4"/> Capa</TabsTrigger>
+                    <TabsTrigger value="hero" className="gap-2 py-2.5 px-5"><Home className="w-4 h-4"/> Capa & Nav</TabsTrigger>
+                    {/* NOVA ABA ÍNDICE */}
+                    <TabsTrigger value="index" className="gap-2 py-2.5 px-5"><List className="w-4 h-4"/> Índice</TabsTrigger>
                     <TabsTrigger value="intro" className="gap-2 py-2.5 px-5"><Layout className="w-4 h-4"/> Intro</TabsTrigger>
                     <TabsTrigger value="brand" className="gap-2 py-2.5 px-5"><FileText className="w-4 h-4"/> Marca</TabsTrigger>
+                    <TabsTrigger value="personas" className="gap-2 py-2.5 px-5"><Users className="w-4 h-4"/> Personas</TabsTrigger>
                     <TabsTrigger value="identity" className="gap-2 py-2.5 px-5"><Image className="w-4 h-4"/> Identidade</TabsTrigger>
                     <TabsTrigger value="colors" className="gap-2 py-2.5 px-5"><Palette className="w-4 h-4"/> Cores</TabsTrigger>
                     <TabsTrigger value="typography" className="gap-2 py-2.5 px-5"><Type className="w-4 h-4"/> Tipo</TabsTrigger>
@@ -140,76 +135,91 @@ export const BrandEditor = () => {
                 </ScrollArea>
               </div>
 
-              {/* --- 1. CAPA (HERO) --- */}
+              {/* 1. CAPA E NAV */}
               <TabsContent value="hero" className="space-y-6">
+                 {/* ... (Mantido igual ao anterior) ... */}
                  <div className="border p-8 rounded-xl bg-card shadow-sm space-y-6">
-                    <h3 className="font-heading text-2xl text-accent border-b pb-4">Primeira Tela (Capa)</h3>
+                    <h3 className="font-heading text-2xl text-accent border-b pb-4">Navegação</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                       <div className="space-y-2">
-                          <Label>Título - Linha 1</Label>
-                          <Input value={store.hero.titleLine1} onChange={(e) => store.updateHero({ titleLine1: e.target.value })} />
-                       </div>
-                       <div className="space-y-2">
-                          <Label>Título - Linha 2</Label>
-                          <Input value={store.hero.titleLine2} onChange={(e) => store.updateHero({ titleLine2: e.target.value })} />
-                       </div>
+                       <div className="space-y-2"><Label>Texto do Logo</Label><Input value={store.navigation.logoText} onChange={(e) => store.updateNavigation({ logoText: e.target.value })} /></div>
+                       <div className="space-y-2"><FileUpload label="Imagem do Logo (Opcional)" value={store.navigation.logoImage} onChange={(val) => store.updateNavigation({ logoImage: val })} /></div>
                     </div>
-                    <div className="space-y-2">
-                       <Label>Assinatura (Rodapé da Capa)</Label>
-                       <Input value={store.hero.agencyName} onChange={(e) => store.updateHero({ agencyName: e.target.value })} />
+                    <div className="flex items-center space-x-2 pt-2">
+                      <Switch id="show-both" checked={store.navigation.showBoth} onCheckedChange={(checked) => store.updateNavigation({ showBoth: checked })} />
+                      <Label htmlFor="show-both">Mostrar Imagem e Texto juntos</Label>
+                    </div>
+                 </div>
+                 <div className="border p-8 rounded-xl bg-card shadow-sm space-y-6">
+                    <h3 className="font-heading text-2xl text-accent border-b pb-4">Capa (Hero)</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                       <div className="space-y-2"><Label>Título Linha 1</Label><Input value={store.hero.titleLine1} onChange={(e) => store.updateHero({ titleLine1: e.target.value })} /></div>
+                       <div className="space-y-2"><Label>Título Linha 2</Label><Input value={store.hero.titleLine2} onChange={(e) => store.updateHero({ titleLine2: e.target.value })} /></div>
+                    </div>
+                    <div className="space-y-2"><FileUpload label="Vídeo de Fundo (MP4)" accept="video/mp4" value={store.hero.videoUrl} onChange={(val) => store.updateHero({ videoUrl: val })} /><p className="text-xs text-muted-foreground">Recomendado: MP4 leve.</p></div>
+                    <Input value={store.hero.agencyName} onChange={(e) => store.updateHero({ agencyName: e.target.value })} placeholder="Rodapé" />
+                 </div>
+              </TabsContent>
+
+              {/* 2. ÍNDICE (NOVO CONTEÚDO) */}
+              <TabsContent value="index" className="space-y-6">
+                 <div className="border p-8 rounded-xl bg-card shadow-sm space-y-6">
+                    <h3 className="font-heading text-2xl text-accent border-b pb-4">Configuração do Índice</h3>
+                    <div className="grid grid-cols-2 gap-6">
+                       <div className="space-y-2"><Label>Número da Seção</Label><Input value={store.indexSection.sectionNumber} onChange={(e) => store.updateIndexSection({ sectionNumber: e.target.value })} /></div>
+                       <div className="space-y-2"><Label>Título</Label><Input value={store.indexSection.title} onChange={(e) => store.updateIndexSection({ title: e.target.value })} /></div>
+                    </div>
+                    
+                    <div className="space-y-4 pt-4 border-t">
+                       <div className="flex justify-between items-center"><Label className="text-lg">Itens do Menu</Label></div>
+                       <div className="space-y-4">
+                          {store.indexSection.items.map((item, idx) => (
+                             <div key={idx} className="p-4 border rounded-lg bg-muted/20 grid grid-cols-1 md:grid-cols-2 gap-4 relative">
+                                {/* Campos */}
+                                <div className="space-y-1"><Label className="text-xs">Número</Label><Input value={item.number} onChange={(e) => { const newItems = [...store.indexSection.items]; newItems[idx] = { ...item, number: e.target.value }; store.updateIndexSection({ items: newItems }); }} /></div>
+                                <div className="space-y-1"><Label className="text-xs">Título</Label><Input value={item.title} onChange={(e) => { const newItems = [...store.indexSection.items]; newItems[idx] = { ...item, title: e.target.value }; store.updateIndexSection({ items: newItems }); }} /></div>
+                                <div className="space-y-1"><Label className="text-xs">Subtítulo</Label><Input value={item.subtitle} onChange={(e) => { const newItems = [...store.indexSection.items]; newItems[idx] = { ...item, subtitle: e.target.value }; store.updateIndexSection({ items: newItems }); }} /></div>
+                                <div className="space-y-1"><Label className="text-xs">Link (#id)</Label><Input value={item.href} className="font-mono text-accent" onChange={(e) => { const newItems = [...store.indexSection.items]; newItems[idx] = { ...item, href: e.target.value }; store.updateIndexSection({ items: newItems }); }} /></div>
+                             </div>
+                          ))}
+                          <p className="text-xs text-muted-foreground mt-2">* Os links devem corresponder aos IDs das seções (ex: #introduction, #brand, #personas).</p>
+                       </div>
                     </div>
                  </div>
               </TabsContent>
 
-              {/* --- 2. INTRO & SOBRE --- */}
+              {/* 3. INTRO */}
               <TabsContent value="intro" className="space-y-6">
                 <Accordion type="single" collapsible className="w-full" defaultValue="intro-section">
                   <AccordionItem value="intro-section" className="border rounded-xl px-4 shadow-sm bg-card/50">
-                    <AccordionTrigger className="hover:no-underline py-4">Seção 01: Introdução</AccordionTrigger>
+                    <AccordionTrigger className="hover:no-underline py-4">Introdução</AccordionTrigger>
                     <AccordionContent className="space-y-6 pt-2 pb-6 px-2">
-                      <div className="grid grid-cols-4 gap-6">
-                         <div className="col-span-1 space-y-2"><Label>Número</Label><Input value={store.introduction.sectionNumber} onChange={(e) => store.updateIntroduction({ sectionNumber: e.target.value })} /></div>
-                         <div className="col-span-3 space-y-2"><Label>Título</Label><Input value={store.introduction.title} onChange={(e) => store.updateIntroduction({ title: e.target.value })} /></div>
-                      </div>
-                      <div className="space-y-2"><Label>Texto Principal</Label><Textarea className="min-h-[120px]" value={store.introduction.mainText} onChange={(e) => store.updateIntroduction({ mainText: e.target.value })} /></div>
-                      <div className="space-y-2"><Label>Citação</Label><Input value={store.introduction.quote} onChange={(e) => store.updateIntroduction({ quote: e.target.value })} /></div>
-                      
+                      <Input value={store.introduction.title} onChange={(e) => store.updateIntroduction({ title: e.target.value })} />
+                      <Textarea value={store.introduction.mainText} onChange={(e) => store.updateIntroduction({ mainText: e.target.value })} />
                       <div className="space-y-3 pt-4 border-t">
-                        <Label className="text-accent font-bold">Lista de Tópicos</Label>
+                        <div className="flex justify-between items-center"><Label className="text-accent font-bold">Tópicos</Label><Button size="sm" variant="outline" onClick={store.addIntroductionTopic}><Plus className="w-3 h-3 mr-1"/> Adicionar</Button></div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           {store.introduction.contentList.map((item, idx) => (
-                            <div key={idx} className="flex items-center gap-3">
-                              <span className="text-xs font-mono text-muted-foreground bg-muted w-8 h-8 flex items-center justify-center rounded shrink-0">{String(idx + 1).padStart(2, '0')}</span>
-                              <Input value={item} onChange={(e) => { const newList = [...store.introduction.contentList]; newList[idx] = e.target.value; store.updateIntroduction({ contentList: newList }); }} />
+                            <div key={idx} className="flex gap-2 items-center">
+                              <Input className="w-20 text-center font-mono" value={item.number} onChange={(e) => { const newList = [...store.introduction.contentList]; newList[idx] = { ...item, number: e.target.value }; store.updateIntroduction({ contentList: newList }); }} />
+                              <Input className="flex-1" value={item.text} onChange={(e) => { const newList = [...store.introduction.contentList]; newList[idx] = { ...item, text: e.target.value }; store.updateIntroduction({ contentList: newList }); }} />
+                              <Button size="icon" variant="ghost" className="text-destructive shrink-0" onClick={() => store.removeIntroductionTopic(idx)}><Trash2 className="w-4 h-4"/></Button>
                             </div>
                           ))}
                         </div>
                       </div>
                     </AccordionContent>
                   </AccordionItem>
-                  <AccordionItem value="about-section" className="border rounded-xl px-4 shadow-sm bg-card/50 mt-6">
-                    <AccordionTrigger className="hover:no-underline py-4">Seção 02: Sobre a Marca</AccordionTrigger>
-                    <AccordionContent className="space-y-6 pt-2 pb-6 px-2">
-                      <div className="space-y-2"><Label>Título</Label><Input value={store.aboutBrand.title} onChange={(e) => store.updateAboutBrand({ title: e.target.value })} /></div>
-                      <div className="space-y-2"><Label>Texto Destaque</Label><Textarea rows={3} value={store.aboutBrand.highlightText} onChange={(e) => store.updateAboutBrand({ highlightText: e.target.value })} /></div>
-                      <div className="space-y-4"><Label>Parágrafos</Label>{store.aboutBrand.descriptionParagraphs.map((para, idx) => (<Textarea key={idx} rows={4} value={para} onChange={(e) => { const newParas = [...store.aboutBrand.descriptionParagraphs]; newParas[idx] = e.target.value; store.updateAboutBrand({ descriptionParagraphs: newParas }); }} />))}</div>
-                    </AccordionContent>
-                  </AccordionItem>
                 </Accordion>
               </TabsContent>
 
-              {/* --- 3. MARCA --- */}
+              {/* 4. MARCA */}
               <TabsContent value="brand" className="space-y-8">
                  <div className="space-y-6 border p-8 rounded-xl bg-card shadow-sm">
-                    <h3 className="font-heading text-2xl text-accent border-b pb-4 mb-2">Missão</h3>
-                    <Input value={store.brandSection.missionTitle} onChange={(e) => store.updateBrandSection({ missionTitle: e.target.value })} />
-                    <Textarea className="text-lg leading-relaxed min-h-[100px]" value={store.brandSection.missionText} onChange={(e) => store.updateBrandSection({ missionText: e.target.value })} />
-                 </div>
-                 <div className="space-y-6">
-                    <div className="flex items-center justify-between"><h3 className="font-heading text-2xl text-accent">Valores</h3></div>
+                    <div className="flex justify-between items-center"><h3 className="font-heading text-2xl text-accent">Valores</h3><Button size="sm" onClick={store.addBrandValue}><Plus className="w-4 h-4 mr-2"/> Novo Valor</Button></div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {store.brandSection.values.map((val, idx) => (
-                        <div key={idx} className="p-6 bg-muted/20 rounded-xl border space-y-4">
+                        <div key={idx} className="p-6 bg-muted/20 rounded-xl border space-y-4 relative group">
+                           <Button size="icon" variant="ghost" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-destructive" onClick={() => store.removeBrandValue(idx)}><Trash2 className="w-4 h-4"/></Button>
                            <Input value={val.title} className="font-bold text-lg bg-transparent border-0 border-b rounded-none px-0" onChange={(e) => { const newVals = [...store.brandSection.values]; newVals[idx] = { ...val, title: e.target.value }; store.updateBrandSection({ values: newVals }); }} />
                            <Textarea value={val.description} className="resize-none min-h-[80px]" onChange={(e) => { const newVals = [...store.brandSection.values]; newVals[idx] = { ...val, description: e.target.value }; store.updateBrandSection({ values: newVals }); }} />
                         </div>
@@ -218,163 +228,141 @@ export const BrandEditor = () => {
                  </div>
               </TabsContent>
 
-              {/* --- 4. IDENTIDADE --- */}
-              <TabsContent value="identity" className="space-y-6">
-                 <Accordion type="single" collapsible className="w-full" defaultValue="logos">
-                    <AccordionItem value="logos" className="border rounded-xl px-4 shadow-sm bg-card/50">
-                      <AccordionTrigger className="hover:no-underline py-4">Logótipos</AccordionTrigger>
-                      <AccordionContent className="space-y-8 pt-2 pb-6">
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="space-y-4 p-6 bg-background rounded-xl border shadow-sm">
-                              <Label className="text-lg font-bold">Logo Principal</Label>
-                              <FileUpload label="Imagem (PNG/SVG)" value={store.identity.primaryLogoImage} onChange={(val) => store.updateIdentity({ primaryLogoImage: val })} />
-                              <Input value={store.identity.primaryLogoText} onChange={(e) => store.updateIdentity({ primaryLogoText: e.target.value })} placeholder="Alt Text" />
-                            </div>
-                            <div className="space-y-4 p-6 bg-foreground rounded-xl border shadow-sm text-background">
-                              <Label className="text-lg font-bold text-background">Logo Invertido</Label>
-                              <FileUpload label="Imagem Invertida" value={store.identity.invertedLogoImage} onChange={(val) => store.updateIdentity({ invertedLogoImage: val })} />
-                              <Input className="bg-background/10 text-background" value={store.identity.invertedLogoText} onChange={(e) => store.updateIdentity({ invertedLogoText: e.target.value })} placeholder="Alt Text" />
-                            </div>
-                         </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                    <AccordionItem value="clearspace" className="border rounded-xl px-4 shadow-sm bg-card/50 mt-6">
-                      <AccordionTrigger className="hover:no-underline py-4">Área de Proteção</AccordionTrigger>
-                      <AccordionContent className="space-y-6 pt-2 pb-6">
-                         <div className="p-6 border-2 border-dashed rounded-xl bg-muted/10"><FileUpload label="Diagrama" value={store.identity.clearSpaceImage} onChange={(val) => store.updateIdentity({ clearSpaceImage: val })} /></div>
-                         <Textarea rows={3} value={store.identity.clearSpaceDescription} onChange={(e) => store.updateIdentity({ clearSpaceDescription: e.target.value })} />
-                      </AccordionContent>
-                    </AccordionItem>
-                 </Accordion>
+              {/* 5. PERSONAS */}
+              <TabsContent value="personas" className="space-y-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-2xl font-heading">Público-alvo / Personas</h3>
+                  <Button onClick={store.addPersonaItem}><Plus className="w-4 h-4 mr-2"/> Nova Persona</Button>
+                </div>
+                <div className="space-y-6">
+                   {store.personas.items.map((item, idx) => (
+                     <div key={idx} className="p-6 border rounded-xl space-y-4 bg-card shadow-sm relative group">
+                        <Button size="icon" variant="ghost" className="absolute top-2 right-2 text-destructive opacity-0 group-hover:opacity-100" onClick={() => store.removePersonaItem(idx)}><Trash2 className="w-4 h-4"/></Button>
+                        <div className="flex gap-4">
+                           <div className="w-24"><Label>Número</Label><Input value={item.number} className="font-mono" onChange={(e) => { const newItems = [...store.personas.items]; newItems[idx] = { ...item, number: e.target.value }; store.updatePersonas({ items: newItems }); }} /></div>
+                           <div className="flex-1"><Label>Título</Label><Input value={item.title} className="font-bold uppercase" onChange={(e) => { const newItems = [...store.personas.items]; newItems[idx] = { ...item, title: e.target.value }; store.updatePersonas({ items: newItems }); }} /></div>
+                        </div>
+                        <div className="space-y-2"><Label>Descrição</Label><Textarea value={item.description} onChange={(e) => { const newItems = [...store.personas.items]; newItems[idx] = { ...item, description: e.target.value }; store.updatePersonas({ items: newItems }); }} /></div>
+                        <FileUpload label="Imagem da Persona (Opcional)" value={item.image} onChange={(val) => { const newItems = [...store.personas.items]; newItems[idx] = { ...item, image: val }; store.updatePersonas({ items: newItems }); }} />
+                     </div>
+                   ))}
+                </div>
               </TabsContent>
 
-              {/* --- 5. CORES --- */}
+              {/* 6. IDENTIDADE */}
+              <TabsContent value="identity" className="space-y-6">
+                 <div className="space-y-4 border p-8 rounded-xl bg-card shadow-sm">
+                   <h3 className="font-heading text-2xl text-accent border-b pb-4">Logótipos</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-4">
+                          <Label>Logo Principal</Label>
+                          <FileUpload label="Imagem" value={store.identity.primaryLogoImage} onChange={(val) => store.updateIdentity({ primaryLogoImage: val })} />
+                          <Input value={store.identity.primaryLogoText} onChange={(e) => store.updateIdentity({ primaryLogoText: e.target.value })} placeholder="Alt Text" />
+                        </div>
+                        <div className="space-y-4">
+                          <Label>Logo Invertido</Label>
+                          <FileUpload label="Imagem" value={store.identity.invertedLogoImage} onChange={(val) => store.updateIdentity({ invertedLogoImage: val })} />
+                        </div>
+                    </div>
+                 </div>
+              </TabsContent>
+
+              {/* 7. CORES */}
               <TabsContent value="colors" className="space-y-8">
                 <div className="space-y-6">
-                  <h3 className="text-2xl font-medium border-b pb-2">Paleta Principal</h3>
+                  <div className="flex justify-between items-center border-b pb-4">
+                    <h3 className="text-2xl font-medium">Paleta Principal</h3>
+                    <Button onClick={store.addColor}><Plus className="w-4 h-4 mr-2"/> Adicionar Cor</Button>
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {store.colors.primaryColors.map((color, index) => (
-                      <div key={index} className="p-4 border rounded-xl space-y-4 bg-card shadow-sm">
+                      <div key={index} className="p-4 border rounded-xl space-y-4 bg-card shadow-sm relative group">
+                        <Button size="icon" variant="destructive" className="absolute -top-2 -right-2 h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10" onClick={() => store.removeColor(index)}><Trash2 className="w-4 h-4"/></Button>
                         <div className="flex items-center gap-4">
-                          <div className="relative group cursor-pointer shrink-0">
+                          <div className="relative cursor-pointer shrink-0">
                              <div className="w-16 h-16 rounded-2xl border shadow-sm" style={{ backgroundColor: color.hex }} />
                              <input type="color" value={color.hex} onChange={(e) => { const newColors = [...store.colors.primaryColors]; newColors[index] = { ...color, hex: e.target.value }; store.updateColors({ primaryColors: newColors }); }} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
                           </div>
                           <div className="flex-1 space-y-1"><Label className="text-xs text-muted-foreground">Nome</Label><Input value={color.name} className="font-bold" onChange={(e) => { const newColors = [...store.colors.primaryColors]; newColors[index] = { ...color, name: e.target.value }; store.updateColors({ primaryColors: newColors }); }} /></div>
                         </div>
+                        <Input value={color.usage} placeholder="Função da cor" onChange={(e) => { const newColors = [...store.colors.primaryColors]; newColors[index] = { ...color, usage: e.target.value }; store.updateColors({ primaryColors: newColors }); }} />
                       </div>
                     ))}
                   </div>
+                  <p className="text-sm text-muted-foreground italic">* O sistema gera automaticamente as variações de opacidade (100%, 90%, 60%, 40%, 20%).</p>
                 </div>
                 <div className="space-y-6 pt-4">
-                  <h3 className="text-2xl font-medium border-b pb-2">Matizes (Secundárias)</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {store.colors.secondaryColors.map((color, index) => (
-                      <div key={index} className="p-4 border rounded-xl space-y-4 bg-card shadow-sm">
-                        <div className="flex items-center gap-4">
-                          <div className="relative group cursor-pointer shrink-0">
-                             <div className="w-16 h-16 rounded-2xl border shadow-sm" style={{ backgroundColor: color.hex }} />
-                             <input type="color" value={color.hex} onChange={(e) => { const newColors = [...store.colors.secondaryColors]; newColors[index] = { ...color, hex: e.target.value }; store.updateColors({ secondaryColors: newColors }); }} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
-                          </div>
-                          <div className="flex-1 space-y-1"><Label className="text-xs text-muted-foreground">Nome</Label><Input value={color.name} className="font-bold" onChange={(e) => { const newColors = [...store.colors.secondaryColors]; newColors[index] = { ...color, name: e.target.value }; store.updateColors({ secondaryColors: newColors }); }} /></div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="space-y-6 pt-4">
-                  <h3 className="text-2xl font-medium border-b pb-2">Diretrizes de Uso</h3>
+                  <div className="flex justify-between items-center border-b pb-2"><h3 className="text-2xl font-medium">Diretrizes</h3><Button size="sm" variant="outline" onClick={store.addColorGuideline}><Plus className="w-3 h-3 mr-1"/> Add</Button></div>
                   <div className="space-y-3">
                     {store.colors.usageGuidelines.map((item, idx) => (
-                      <div key={idx} className="flex gap-2 items-center"><span className="text-accent text-xl">•</span><Input value={item} onChange={(e) => { const newList = [...store.colors.usageGuidelines]; newList[idx] = e.target.value; store.updateColors({ usageGuidelines: newList }); }} /></div>
+                      <div key={idx} className="flex gap-2 items-center"><span className="text-accent text-xl">•</span><Input value={item} onChange={(e) => { const newList = [...store.colors.usageGuidelines]; newList[idx] = e.target.value; store.updateColors({ usageGuidelines: newList }); }} /><Button size="icon" variant="ghost" className="text-destructive" onClick={() => store.removeColorGuideline(idx)}><Trash2 className="w-4 h-4"/></Button></div>
                     ))}
                   </div>
                 </div>
               </TabsContent>
 
-              {/* --- 6. APLICAÇÃO --- */}
+              {/* 8. TIPOGRAFIA */}
+              <TabsContent value="typography" className="space-y-6">
+                 <div className="border p-8 rounded-xl space-y-6 shadow-sm bg-card">
+                    <h3 className="font-heading text-2xl text-accent border-b pb-4">Fonte Principal</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2"><Label>Nome</Label><Input value={store.typography.primaryFontName} onChange={(e) => store.updateTypography({ primaryFontName: e.target.value })} /></div>
+                      <div className="space-y-2"><FileUpload label="Arquivo (.ttf, .otf)" value={store.typography.primaryFontUrl} onChange={(val) => store.updateTypography({ primaryFontUrl: val })} /></div>
+                    </div>
+                    {/* FONTES EXTRAS */}
+                    <div className="space-y-6 pt-6 border-t mt-6">
+                       <div className="flex justify-between items-center"><h3 className="font-heading text-xl">Outras Fontes</h3><Button size="sm" variant="outline" onClick={() => { const currentExtras = store.typography.extraFonts || []; store.updateTypography({ extraFonts: [...currentExtras, { name: 'Nova Fonte', url: '' }] }); }}><Plus className="w-4 h-4 mr-2"/> Adicionar</Button></div>
+                       <div className="space-y-4">
+                          {(store.typography.extraFonts || []).map((font, idx) => (
+                             <div key={idx} className="flex gap-4 items-end border p-4 rounded-lg bg-muted/20 relative group">
+                                <Button size="icon" variant="ghost" className="absolute top-2 right-2 text-destructive h-6 w-6" onClick={() => { const newExtras = [...(store.typography.extraFonts || [])]; newExtras.splice(idx, 1); store.updateTypography({ extraFonts: newExtras }); }}><Trash2 className="w-3 h-3"/></Button>
+                                <div className="flex-1 space-y-2"><Label>Nome</Label><Input value={font.name} onChange={(e) => { const newExtras = [...(store.typography.extraFonts || [])]; newExtras[idx] = { ...font, name: e.target.value }; store.updateTypography({ extraFonts: newExtras }); }} /></div>
+                                <div className="flex-1 space-y-2"><FileUpload label="Arquivo" value={font.url} onChange={(val) => { const newExtras = [...(store.typography.extraFonts || [])]; newExtras[idx] = { ...font, url: val }; store.updateTypography({ extraFonts: newExtras }); }} /></div>
+                             </div>
+                          ))}
+                       </div>
+                    </div>
+                 </div>
+              </TabsContent>
+
+              {/* 9. APLICAÇÃO */}
               <TabsContent value="application" className="space-y-6">
+                 <div className="flex justify-end mb-4"><Button onClick={store.addApplicationItem}><Plus className="w-4 h-4 mr-2"/> Novo Mockup</Button></div>
                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {store.application.items.map((item, idx) => (
-                      <div key={idx} className="p-6 border rounded-xl space-y-4 bg-card shadow-sm">
+                      <div key={idx} className="p-6 border rounded-xl space-y-4 bg-card shadow-sm relative group">
+                         <Button size="icon" variant="ghost" className="absolute top-2 right-2 text-destructive opacity-0 group-hover:opacity-100" onClick={() => store.removeApplicationItem(idx)}><Trash2 className="w-4 h-4"/></Button>
                          <div className="flex justify-between items-center pb-2 border-b">
-                            <span className="font-mono text-sm bg-accent/10 text-accent px-3 py-1 rounded-full">{item.number}</span>
-                            <Input value={item.title} className="h-8 font-bold w-40 text-right border-none bg-transparent" onChange={(e) => { const newItems = [...store.application.items]; newItems[idx] = { ...item, title: e.target.value }; store.updateApplication({ items: newItems }); }} />
+                            <Input value={item.number} className="w-16 font-mono text-sm bg-accent/10 text-accent text-center" onChange={(e) => { const newItems = [...store.application.items]; newItems[idx] = { ...item, number: e.target.value }; store.updateApplication({ items: newItems }); }} />
+                            <Input value={item.title} className="h-8 font-bold w-full text-right border-none bg-transparent" onChange={(e) => { const newItems = [...store.application.items]; newItems[idx] = { ...item, title: e.target.value }; store.updateApplication({ items: newItems }); }} />
                          </div>
-                         <FileUpload label="Imagem do Mockup" value={item.image} onChange={(val) => { const newItems = [...store.application.items]; newItems[idx] = { ...item, image: val }; store.updateApplication({ items: newItems }); }} />
+                         <FileUpload label="Imagem" value={item.image} onChange={(val) => { const newItems = [...store.application.items]; newItems[idx] = { ...item, image: val }; store.updateApplication({ items: newItems }); }} />
                          <Input value={item.description} onChange={(e) => { const newItems = [...store.application.items]; newItems[idx] = { ...item, description: e.target.value }; store.updateApplication({ items: newItems }); }} />
                       </div>
                     ))}
                  </div>
               </TabsContent>
 
-              {/* --- 7. DOWNLOADS --- */}
+              {/* 10. DOWNLOADS */}
               <TabsContent value="downloads" className="space-y-6">
-                 <div className="space-y-4">
+                  <div className="flex justify-end mb-4"><Button onClick={store.addDownloadItem}><Plus className="w-4 h-4 mr-2"/> Novo Arquivo</Button></div>
+                  <div className="space-y-4">
                     {store.downloads.items.map((item, idx) => (
-                       <div key={idx} className="p-6 border rounded-xl flex flex-col lg:flex-row gap-6 items-start bg-card shadow-sm">
+                        <div key={idx} className="p-6 border rounded-xl flex flex-col lg:flex-row gap-6 items-start bg-card shadow-sm relative group">
+                          <Button size="icon" variant="ghost" className="absolute top-2 right-2 text-destructive opacity-0 group-hover:opacity-100" onClick={() => store.removeDownloadItem(idx)}><Trash2 className="w-4 h-4"/></Button>
                           <div className="flex-1 space-y-4 w-full">
-                             <Input value={item.title} className="font-bold text-lg" onChange={(e) => { const newItems = [...store.downloads.items]; newItems[idx] = { ...item, title: e.target.value }; store.updateDownloads({ items: newItems }); }} />
-                             <Input value={item.description} onChange={(e) => { const newItems = [...store.downloads.items]; newItems[idx] = { ...item, description: e.target.value }; store.updateDownloads({ items: newItems }); }} />
+                              <Input value={item.title} className="font-bold text-lg" onChange={(e) => { const newItems = [...store.downloads.items]; newItems[idx] = { ...item, title: e.target.value }; store.updateDownloads({ items: newItems }); }} />
+                              <Input value={item.description} onChange={(e) => { const newItems = [...store.downloads.items]; newItems[idx] = { ...item, description: e.target.value }; store.updateDownloads({ items: newItems }); }} />
                           </div>
                           <div className="w-full lg:w-1/2 bg-muted/20 p-4 rounded-lg border">
-                             <FileUpload label="Arquivo" accept=".zip,.pdf,.rar" value={item.fileUrl} onChange={(val) => { const newItems = [...store.downloads.items]; newItems[idx] = { ...item, fileUrl: val }; store.updateDownloads({ items: newItems }); }} />
+                              <FileUpload label="Arquivo" accept=".zip,.pdf,.rar" value={item.fileUrl} onChange={(val) => { const newItems = [...store.downloads.items]; newItems[idx] = { ...item, fileUrl: val }; store.updateDownloads({ items: newItems }); }} />
                           </div>
-                       </div>
+                        </div>
                     ))}
-                 </div>
+                  </div>
               </TabsContent>
 
-              {/* --- 8. TIPOGRAFIA (COM UPLOAD) --- */}
-              <TabsContent value="typography" className="space-y-6">
-                 <div className="grid grid-cols-1 gap-8">
-                    
-                    {/* FONTE PRINCIPAL */}
-                    <div className="border p-8 rounded-xl space-y-6 shadow-sm bg-card">
-                       <h3 className="font-heading text-2xl text-accent border-b pb-4">Fonte Principal</h3>
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                         <div className="space-y-2">
-                            <Label>Nome da Família</Label>
-                            <Input value={store.typography.primaryFontName} onChange={(e) => store.updateTypography({ primaryFontName: e.target.value })} />
-                         </div>
-                         <div className="space-y-2">
-                            {/* AQUI ESTÁ O UPLOAD DA FONTE */}
-                            <FileUpload 
-                               label="Arquivo da Fonte (.ttf, .otf, .woff)" 
-                               accept=".ttf,.otf,.woff,.woff2"
-                               value={store.typography.primaryFontUrl} 
-                               onChange={(val) => store.updateTypography({ primaryFontUrl: val })} 
-                            />
-                         </div>
-                       </div>
-                       <div className="space-y-2"><Label>Alfabeto Demo</Label><Input value={store.typography.primaryFontAlphabet} onChange={(e) => store.updateTypography({ primaryFontAlphabet: e.target.value })} /></div>
-                       <div className="space-y-2"><Label>Caracteres</Label><Textarea className="font-mono text-sm leading-loose tracking-widest min-h-[100px]" value={store.typography.primaryFontCharacters} onChange={(e) => store.updateTypography({ primaryFontCharacters: e.target.value })} /></div>
-                    </div>
-
-                    {/* FONTE SECUNDÁRIA */}
-                    <div className="border p-8 rounded-xl space-y-6 shadow-sm bg-card">
-                       <h3 className="font-heading text-2xl text-accent border-b pb-4">Fonte Secundária</h3>
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                         <div className="space-y-2">
-                            <Label>Nome da Família</Label>
-                            <Input value={store.typography.secondaryFontName} onChange={(e) => store.updateTypography({ secondaryFontName: e.target.value })} />
-                         </div>
-                         <div className="space-y-2">
-                            <FileUpload 
-                               label="Arquivo da Fonte (.ttf, .otf, .woff)" 
-                               accept=".ttf,.otf,.woff,.woff2"
-                               value={store.typography.secondaryFontUrl} 
-                               onChange={(val) => store.updateTypography({ secondaryFontUrl: val })} 
-                            />
-                         </div>
-                       </div>
-                       <div className="space-y-2"><Label>Descrição</Label><Textarea value={store.typography.secondaryFontDescription} onChange={(e) => store.updateTypography({ secondaryFontDescription: e.target.value })} /></div>
-                    </div>
-
-                 </div>
-              </TabsContent>
-
-              {/* --- 9. CRÉDITOS --- */}
+              {/* 11. CRÉDITOS */}
               <TabsContent value="credits" className="space-y-6">
                  <div className="space-y-4 border p-8 rounded-xl bg-card shadow-sm">
                     <div className="grid grid-cols-2 gap-6">
@@ -382,11 +370,13 @@ export const BrandEditor = () => {
                        <div className="space-y-2"><Label>Ano</Label><Input value={store.credits.year} onChange={(e) => store.updateCredits({ year: e.target.value })} /></div>
                     </div>
                  </div>
+                 <div className="flex justify-end"><Button size="sm" onClick={store.addTeamMember}><Plus className="w-4 h-4 mr-2"/> Adicionar Membro</Button></div>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {store.credits.team.map((member, idx) => (
-                      <div key={idx} className="flex gap-3 items-center group p-3 border rounded-lg bg-card/50">
+                      <div key={idx} className="flex gap-3 items-center group p-3 border rounded-lg bg-card/50 relative">
                          <div className="flex-1"><Input value={member.role} onChange={(e) => { const newTeam = [...store.credits.team]; newTeam[idx] = { ...member, role: e.target.value }; store.updateCredits({ team: newTeam }); }} /></div>
                          <div className="flex-1"><Input value={member.name} onChange={(e) => { const newTeam = [...store.credits.team]; newTeam[idx] = { ...member, name: e.target.value }; store.updateCredits({ team: newTeam }); }} /></div>
+                         <Button size="icon" variant="ghost" className="text-destructive h-8 w-8" onClick={() => store.removeTeamMember(idx)}><Trash2 className="w-3 h-3"/></Button>
                       </div>
                     ))}
                  </div>

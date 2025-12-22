@@ -14,7 +14,25 @@ const HeroSection = () => {
   };
 
   return (
-    <section id="hero" className="min-h-screen flex flex-col justify-center items-center relative px-6 py-20 md:px-12">
+    <section id="hero" className="min-h-screen flex flex-col justify-center items-center relative px-6 py-20 md:px-12 overflow-hidden">
+      
+      {/* Vídeo Background (Opcional) */}
+      {hero.videoUrl && (
+        <div className="absolute inset-0 w-full h-full z-0">
+          <video 
+            autoPlay 
+            loop 
+            muted 
+            playsInline
+            className="w-full h-full object-cover opacity-40"
+          >
+            <source src={hero.videoUrl} type="video/mp4" />
+          </video>
+          {/* Overlay gradiente para garantir leitura */}
+          <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/50 to-background" />
+        </div>
+      )}
+
       <div className="content-container text-center z-10 flex flex-col items-center">
         <h1 className="font-heading text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold leading-[0.9] tracking-tight mb-6 md:mb-8 fade-in-up stagger-2">
           <span className="text-gradient my-[15px] text-7xl">
@@ -31,7 +49,7 @@ const HeroSection = () => {
         </div>
       </div>
 
-      <button onClick={scrollToIndex} className="absolute bottom-8 md:bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted-foreground hover:text-foreground transition-colors duration-300 fade-in-up stagger-5">
+      <button onClick={scrollToIndex} className="absolute bottom-8 md:bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted-foreground hover:text-foreground transition-colors duration-300 fade-in-up stagger-5 z-20">
         <span className="text-xs tracking-widest uppercase">Explorar</span>
         <ChevronDown className="w-5 h-5 scroll-indicator" />
       </button>

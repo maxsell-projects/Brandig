@@ -14,8 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        heading: ['Outfit', 'sans-serif'],
-        body: ['Inter', 'sans-serif'],
+        // ALTERADO: Agora usa as variáveis CSS em vez de nomes fixos
+        heading: ['var(--font-heading)', 'sans-serif'],
+        body: ['var(--font-body)', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
