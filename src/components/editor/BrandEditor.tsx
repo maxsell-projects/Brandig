@@ -8,14 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Settings, Save, Palette, Type, Layout, FileText, Image, Users, Upload, Download, Smartphone, Loader2, Home, Plus, Trash2, List } from "lucide-react"; 
+import { Settings, Save, Palette, Type, Layout, Image, Users, Upload, Download, Smartphone, Loader2, Home, Plus, Trash2, List, Target, AlignLeft } from "lucide-react"; 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Switch } from "@/components/ui/switch";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { api } from "@/lib/api"; 
 import { toast } from "sonner"; 
 
 // Componente de Upload
-// FIX: Agora o 'accept' é passado corretamente para o input file
 const FileUpload = ({ label, value, onChange, accept = "image/*" }: { label: string, value?: string, onChange: (val: string) => void, accept?: string }) => {
   const [isUploading, setIsUploading] = useState(false);
 
@@ -66,7 +66,7 @@ const FileUpload = ({ label, value, onChange, accept = "image/*" }: { label: str
           </Button>
           <Input 
             type="file" 
-            accept={accept} // AQUI ESTÁ O FIX: Usando a prop accept dinamicamente
+            accept={accept}
             className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
             onChange={handleUpload}
             disabled={isUploading}
@@ -122,9 +122,11 @@ export const BrandEditor = () => {
                     <TabsTrigger value="hero" className="gap-2 py-2.5 px-5"><Home className="w-4 h-4"/> Capa & Nav</TabsTrigger>
                     <TabsTrigger value="index" className="gap-2 py-2.5 px-5"><List className="w-4 h-4"/> Índice</TabsTrigger>
                     <TabsTrigger value="intro" className="gap-2 py-2.5 px-5"><Layout className="w-4 h-4"/> Intro</TabsTrigger>
-                    <TabsTrigger value="brand" className="gap-2 py-2.5 px-5"><FileText className="w-4 h-4"/> Marca</TabsTrigger>
-                    <TabsTrigger value="personas" className="gap-2 py-2.5 px-5"><Users className="w-4 h-4"/> Personas</TabsTrigger>
-                    <TabsTrigger value="identity" className="gap-2 py-2.5 px-5"><Image className="w-4 h-4"/> Identidade</TabsTrigger>
+                    
+                    {/* NOVA ABA: Estratégia (Contexto + Identidade) */}
+                    <TabsTrigger value="context" className="gap-2 py-2.5 px-5"><Target className="w-4 h-4"/> Estratégia</TabsTrigger>
+                    
+                    <TabsTrigger value="identity" className="gap-2 py-2.5 px-5"><Image className="w-4 h-4"/> Identidade Visual</TabsTrigger>
                     <TabsTrigger value="colors" className="gap-2 py-2.5 px-5"><Palette className="w-4 h-4"/> Cores</TabsTrigger>
                     <TabsTrigger value="typography" className="gap-2 py-2.5 px-5"><Type className="w-4 h-4"/> Tipo</TabsTrigger>
                     <TabsTrigger value="application" className="gap-2 py-2.5 px-5"><Smartphone className="w-4 h-4"/> Aplicação</TabsTrigger>
@@ -209,44 +211,184 @@ export const BrandEditor = () => {
                 </Accordion>
               </TabsContent>
 
-              {/* 4. MARCA */}
-              <TabsContent value="brand" className="space-y-8">
-                 <div className="space-y-6 border p-8 rounded-xl bg-card shadow-sm">
-                    <div className="flex justify-between items-center"><h3 className="font-heading text-2xl text-accent">Valores</h3><Button size="sm" onClick={store.addBrandValue}><Plus className="w-4 h-4 mr-2"/> Novo Valor</Button></div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {store.brandSection.values.map((val, idx) => (
-                        <div key={idx} className="p-6 bg-muted/20 rounded-xl border space-y-4 relative group">
-                           <Button size="icon" variant="ghost" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-destructive" onClick={() => store.removeBrandValue(idx)}><Trash2 className="w-4 h-4"/></Button>
-                           <Input value={val.title} className="font-bold text-lg bg-transparent border-0 border-b rounded-none px-0" onChange={(e) => { const newVals = [...store.brandSection.values]; newVals[idx] = { ...val, title: e.target.value }; store.updateBrandSection({ values: newVals }); }} />
-                           <Textarea value={val.description} className="resize-none min-h-[80px]" onChange={(e) => { const newVals = [...store.brandSection.values]; newVals[idx] = { ...val, description: e.target.value }; store.updateBrandSection({ values: newVals }); }} />
-                        </div>
-                      ))}
+              {/* 4. ESTRATÉGIA (SUBSTITUI MARKET CONTEXT) */}
+              <TabsContent value="context" className="space-y-6">
+                 <div className="border p-8 rounded-xl bg-card shadow-sm space-y-6">
+                    <div className="flex justify-between items-center border-b pb-4">
+                        <h3 className="font-heading text-2xl text-accent">Estratégia da Marca</h3>
+                        
+                        {/* Botão para Adicionar Novos Cards */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button className="gap-2">
+                                    <Plus className="w-4 h-4"/> Adicionar Card
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuItem onClick={() => store.addStrategyCard('identity')}>
+                                    <Target className="w-4 h-4 mr-2"/> Identidade (Missão/Visão)
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => store.addStrategyCard('market')}>
+                                    <Users className="w-4 h-4 mr-2"/> Mercado (Persona/Dor)
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => store.addStrategyCard('text')}>
+                                    <AlignLeft className="w-4 h-4 mr-2"/> Texto Livre
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                    
+                    {/* Header da Seção */}
+                    <div className="grid grid-cols-4 gap-4">
+                      <div className="col-span-1">
+                        <Label>Número</Label>
+                        <Input 
+                          value={store.brandStrategy.sectionNumber} 
+                          onChange={(e) => store.updateBrandStrategy({ sectionNumber: e.target.value })}
+                        />
+                      </div>
+                      <div className="col-span-3">
+                        <Label>Título da Seção</Label>
+                        <Input 
+                          value={store.brandStrategy.title} 
+                          onChange={(e) => store.updateBrandStrategy({ title: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="border-t border-border my-6" />
+
+                    {/* LISTA DINÂMICA DE CARDS */}
+                    <div className="space-y-8">
+                        {store.brandStrategy.cards.map((card, index) => (
+                            <div key={card.id} className="border rounded-xl overflow-hidden bg-background shadow-sm">
+                                <div className="p-4 bg-muted/30 border-b flex justify-between items-center">
+                                    <div className="flex items-center gap-2 font-bold">
+                                        <div className="bg-accent/10 text-accent w-6 h-6 rounded flex items-center justify-center text-xs">{index + 1}</div>
+                                        {card.type === 'identity' && <span className="flex items-center gap-2 text-sm"><Target className="w-4 h-4"/> Identidade</span>}
+                                        {card.type === 'market' && <span className="flex items-center gap-2 text-sm"><Users className="w-4 h-4"/> Mercado</span>}
+                                        {card.type === 'text' && <span className="flex items-center gap-2 text-sm"><AlignLeft className="w-4 h-4"/> Texto</span>}
+                                    </div>
+                                    <Button variant="destructive" size="sm" onClick={() => store.removeStrategyCard(card.id)}><Trash2 className="w-4 h-4"/></Button>
+                                </div>
+                                
+                                <div className="p-6 space-y-6">
+                                    <div className="space-y-2">
+                                        <Label>Título do Card</Label>
+                                        <Input value={card.title} onChange={(e) => store.updateStrategyCard(card.id, { title: e.target.value })} />
+                                    </div>
+
+                                    {/* FORMULÁRIO: IDENTIDADE */}
+                                    {card.type === 'identity' && (
+                                        <div className="grid grid-cols-1 gap-6">
+                                            <div className="p-4 bg-muted/10 rounded border space-y-2">
+                                                <Label className="text-accent font-semibold">Topo (Missão)</Label>
+                                                <Input 
+                                                    placeholder="Título" 
+                                                    value={card.mission?.title} 
+                                                    onChange={(e) => store.updateStrategyCard(card.id, { mission: { ...card.mission!, title: e.target.value } })} 
+                                                />
+                                                <Textarea 
+                                                    placeholder="Descrição" 
+                                                    value={card.mission?.description} 
+                                                    onChange={(e) => store.updateStrategyCard(card.id, { mission: { ...card.mission!, description: e.target.value } })} 
+                                                />
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="p-4 bg-muted/10 rounded border space-y-2">
+                                                    <Label className="text-accent font-semibold">Esq (Visão)</Label>
+                                                    <Input 
+                                                        placeholder="Título" 
+                                                        value={card.vision?.title} 
+                                                        onChange={(e) => store.updateStrategyCard(card.id, { vision: { ...card.vision!, title: e.target.value } })} 
+                                                    />
+                                                    <Textarea 
+                                                        className="h-24" 
+                                                        placeholder="Descrição" 
+                                                        value={card.vision?.description} 
+                                                        onChange={(e) => store.updateStrategyCard(card.id, { vision: { ...card.vision!, description: e.target.value } })} 
+                                                    />
+                                                </div>
+                                                <div className="p-4 bg-muted/10 rounded border space-y-2">
+                                                    <Label className="text-accent font-semibold">Dir (Valores)</Label>
+                                                    <Input 
+                                                        placeholder="Título" 
+                                                        value={card.values?.title} 
+                                                        onChange={(e) => store.updateStrategyCard(card.id, { values: { ...card.values!, title: e.target.value } })} 
+                                                    />
+                                                    <Textarea 
+                                                        className="h-24" 
+                                                        placeholder="Descrição" 
+                                                        value={card.values?.description} 
+                                                        onChange={(e) => store.updateStrategyCard(card.id, { values: { ...card.values!, description: e.target.value } })} 
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* FORMULÁRIO: MERCADO */}
+                                    {card.type === 'market' && (
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <div className="p-4 bg-muted/10 rounded border space-y-2">
+                                                <Label className="text-accent font-semibold">Col 1 (Persona)</Label>
+                                                <Input 
+                                                    value={card.persona?.title} 
+                                                    onChange={(e) => store.updateStrategyCard(card.id, { persona: { ...card.persona!, title: e.target.value } })} 
+                                                />
+                                                <Textarea 
+                                                    className="h-32" 
+                                                    value={card.persona?.description} 
+                                                    onChange={(e) => store.updateStrategyCard(card.id, { persona: { ...card.persona!, description: e.target.value } })} 
+                                                />
+                                            </div>
+                                            <div className="p-4 bg-muted/10 rounded border space-y-2">
+                                                <Label className="text-accent font-semibold">Col 2 (Dor)</Label>
+                                                <Input 
+                                                    value={card.pain?.title} 
+                                                    onChange={(e) => store.updateStrategyCard(card.id, { pain: { ...card.pain!, title: e.target.value } })} 
+                                                />
+                                                <Textarea 
+                                                    className="h-32" 
+                                                    value={card.pain?.description} 
+                                                    onChange={(e) => store.updateStrategyCard(card.id, { pain: { ...card.pain!, description: e.target.value } })} 
+                                                />
+                                            </div>
+                                            <div className="p-4 bg-muted/10 rounded border space-y-2">
+                                                <Label className="text-accent font-semibold">Col 3 (Solução)</Label>
+                                                <Input 
+                                                    value={card.solution?.title} 
+                                                    onChange={(e) => store.updateStrategyCard(card.id, { solution: { ...card.solution!, title: e.target.value } })} 
+                                                />
+                                                <Textarea 
+                                                    className="h-32" 
+                                                    value={card.solution?.description} 
+                                                    onChange={(e) => store.updateStrategyCard(card.id, { solution: { ...card.solution!, description: e.target.value } })} 
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* FORMULÁRIO: TEXTO */}
+                                    {card.type === 'text' && (
+                                        <div className="space-y-2">
+                                            <Label>Corpo do Texto</Label>
+                                            <Textarea 
+                                                className="min-h-[200px]" 
+                                                value={card.textBody} 
+                                                onChange={(e) => store.updateStrategyCard(card.id, { textBody: e.target.value })} 
+                                                placeholder="Digite o conteúdo aqui..." 
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
                     </div>
                  </div>
               </TabsContent>
 
-              {/* 5. PERSONAS */}
-              <TabsContent value="personas" className="space-y-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-2xl font-heading">Público-alvo / Personas</h3>
-                  <Button onClick={store.addPersonaItem}><Plus className="w-4 h-4 mr-2"/> Nova Persona</Button>
-                </div>
-                <div className="space-y-6">
-                   {store.personas.items.map((item, idx) => (
-                     <div key={idx} className="p-6 border rounded-xl space-y-4 bg-card shadow-sm relative group">
-                        <Button size="icon" variant="ghost" className="absolute top-2 right-2 text-destructive opacity-0 group-hover:opacity-100" onClick={() => store.removePersonaItem(idx)}><Trash2 className="w-4 h-4"/></Button>
-                        <div className="flex gap-4">
-                           <div className="w-24"><Label>Número</Label><Input value={item.number} className="font-mono" onChange={(e) => { const newItems = [...store.personas.items]; newItems[idx] = { ...item, number: e.target.value }; store.updatePersonas({ items: newItems }); }} /></div>
-                           <div className="flex-1"><Label>Título</Label><Input value={item.title} className="font-bold uppercase" onChange={(e) => { const newItems = [...store.personas.items]; newItems[idx] = { ...item, title: e.target.value }; store.updatePersonas({ items: newItems }); }} /></div>
-                        </div>
-                        <div className="space-y-2"><Label>Descrição</Label><Textarea value={item.description} onChange={(e) => { const newItems = [...store.personas.items]; newItems[idx] = { ...item, description: e.target.value }; store.updatePersonas({ items: newItems }); }} /></div>
-                        <FileUpload label="Imagem da Persona (Opcional)" value={item.image} onChange={(val) => { const newItems = [...store.personas.items]; newItems[idx] = { ...item, image: val }; store.updatePersonas({ items: newItems }); }} />
-                     </div>
-                   ))}
-                </div>
-              </TabsContent>
-
-              {/* 6. IDENTIDADE */}
+              {/* 5. IDENTIDADE */}
               <TabsContent value="identity" className="space-y-6">
                  <div className="space-y-4 border p-8 rounded-xl bg-card shadow-sm">
                    <h3 className="font-heading text-2xl text-accent border-b pb-4">Logótipos</h3>
@@ -264,7 +406,7 @@ export const BrandEditor = () => {
                  </div>
               </TabsContent>
 
-              {/* 7. CORES */}
+              {/* 6. CORES */}
               <TabsContent value="colors" className="space-y-8">
                 <div className="space-y-6">
                   <div className="flex justify-between items-center border-b pb-4">
@@ -298,14 +440,13 @@ export const BrandEditor = () => {
                 </div>
               </TabsContent>
 
-              {/* 8. TIPOGRAFIA (Aba corrigida) */}
+              {/* 7. TIPOGRAFIA */}
               <TabsContent value="typography" className="space-y-6">
                  <div className="border p-8 rounded-xl space-y-6 shadow-sm bg-card">
                     <h3 className="font-heading text-2xl text-accent border-b pb-4">Fonte Principal</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2"><Label>Nome</Label><Input value={store.typography.primaryFontName} onChange={(e) => store.updateTypography({ primaryFontName: e.target.value })} /></div>
                       <div className="space-y-2">
-                        {/* AQUI ESTAVA O PROBLEMA: Agora aceita explicitamente arquivos de fonte */}
                         <FileUpload 
                           label="Arquivo (.ttf, .otf)" 
                           accept=".ttf,.otf,.woff,.woff2" 
@@ -338,7 +479,7 @@ export const BrandEditor = () => {
                  </div>
               </TabsContent>
 
-              {/* 9. APLICAÇÃO */}
+              {/* 8. APLICAÇÃO */}
               <TabsContent value="application" className="space-y-6">
                  <div className="flex justify-end mb-4"><Button onClick={store.addApplicationItem}><Plus className="w-4 h-4 mr-2"/> Novo Mockup</Button></div>
                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -356,7 +497,7 @@ export const BrandEditor = () => {
                  </div>
               </TabsContent>
 
-              {/* 10. DOWNLOADS */}
+              {/* 9. DOWNLOADS */}
               <TabsContent value="downloads" className="space-y-6">
                   <div className="flex justify-end mb-4"><Button onClick={store.addDownloadItem}><Plus className="w-4 h-4 mr-2"/> Novo Arquivo</Button></div>
                   <div className="space-y-4">
@@ -375,7 +516,7 @@ export const BrandEditor = () => {
                   </div>
               </TabsContent>
 
-              {/* 11. CRÉDITOS */}
+              {/* 10. CRÉDITOS */}
               <TabsContent value="credits" className="space-y-6">
                  <div className="space-y-4 border p-8 rounded-xl bg-card shadow-sm">
                     <div className="grid grid-cols-2 gap-6">

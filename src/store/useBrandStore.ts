@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { api } from '@/lib/api'
 import { toast } from "sonner"
 
+// ... (Mantenha as interfaces HeroConfig, IndexConfig, IntroConfig, AboutBrandConfig iguais) ...
 interface HeroConfig {
   titleLine1: string
   titleLine2: string
@@ -43,32 +44,39 @@ interface AboutBrandConfig {
   quote: string
 }
 
-interface BrandValue {
-  title: string
-  description: string
+// --- NOVA ESTRUTURA DINÂMICA DE ESTRATÉGIA ---
+interface StrategyItem {
+  title: string;
+  description: string;
 }
 
-interface BrandSectionConfig {
-  sectionNumber: string
-  title: string
-  missionTitle: string
-  missionText: string
-  valuesTitle: string
-  values: BrandValue[]
+export type StrategyCardType = 'identity' | 'market' | 'text';
+
+export interface StrategyCard {
+  id: string;
+  type: StrategyCardType;
+  title: string; // Título do Card (ex: "Identidade", "Contexto")
+  
+  // Dados para o tipo 'identity'
+  mission?: StrategyItem;
+  vision?: StrategyItem;
+  values?: StrategyItem;
+  
+  // Dados para o tipo 'market'
+  persona?: StrategyItem;
+  pain?: StrategyItem;
+  solution?: StrategyItem;
+
+  // Dados para o tipo 'text' (genérico)
+  textBody?: string; 
 }
 
-interface PersonaItem {
-  number: string
-  title: string
-  description: string
-  image?: string
+interface BrandStrategyConfig {
+  sectionNumber: string;
+  title: string;
+  cards: StrategyCard[]; // Agora é uma lista!
 }
-
-interface PersonasConfig {
-  sectionNumber: string
-  title: string
-  items: PersonaItem[]
-}
+// ----------------------------------------------------------
 
 interface IdentityConfig {
   sectionNumber: string
@@ -185,8 +193,9 @@ interface BrandState {
   indexSection: IndexConfig 
   introduction: IntroductionConfig
   aboutBrand: AboutBrandConfig
-  brandSection: BrandSectionConfig
-  personas: PersonasConfig 
+  
+  brandStrategy: BrandStrategyConfig;
+
   identity: IdentityConfig
   typography: TypographyConfig
   colors: ColorsConfig
@@ -201,8 +210,13 @@ interface BrandState {
   updateIndexSection: (data: Partial<IndexConfig>) => void 
   updateIntroduction: (data: Partial<IntroductionConfig>) => void
   updateAboutBrand: (data: Partial<AboutBrandConfig>) => void
-  updateBrandSection: (data: Partial<BrandSectionConfig>) => void
-  updatePersonas: (data: Partial<PersonasConfig>) => void
+  
+  // Actions de Estratégia Dinâmica
+  updateBrandStrategy: (data: Partial<BrandStrategyConfig>) => void;
+  addStrategyCard: (type: StrategyCardType) => void;
+  removeStrategyCard: (id: string) => void;
+  updateStrategyCard: (id: string, data: Partial<StrategyCard>) => void;
+
   updateIdentity: (data: Partial<IdentityConfig>) => void
   updateTypography: (data: Partial<TypographyConfig>) => void
   updateColors: (data: Partial<ColorsConfig>) => void
@@ -213,12 +227,6 @@ interface BrandState {
 
   addIntroductionTopic: () => void
   removeIntroductionTopic: (index: number) => void
-  
-  addBrandValue: () => void
-  removeBrandValue: (index: number) => void
-
-  addPersonaItem: () => void
-  removePersonaItem: (index: number) => void
   
   addColor: () => void
   removeColor: (index: number) => void
@@ -253,8 +261,8 @@ export const useBrandStore = create<BrandState>((set, get) => ({
     title: 'Índice',
     items: [
       { number: '01', title: 'Introdução', subtitle: 'A essência da marca', href: '#introduction' },
-      { number: '02', title: 'Marca', subtitle: 'História e valores', href: '#brand' },
-      { number: '03', title: 'Público-alvo', subtitle: 'Personas', href: '#personas' },
+      { number: '02', title: 'Sobre a Marca', subtitle: 'História e propósito', href: '#about-brand' },
+      { number: '03', title: 'Estratégia', subtitle: 'Identidade e Mercado', href: '#strategy' },
       { number: '04', title: 'Identidade Visual', subtitle: 'Elementos gráficos', href: '#identity' },
       { number: '05', title: 'Tipografia', subtitle: 'Sistema tipográfico', href: '#typography' },
       { number: '06', title: 'Cores', subtitle: 'Paleta cromática', href: '#colors' },
@@ -286,26 +294,30 @@ export const useBrandStore = create<BrandState>((set, get) => ({
     quote: '"A verdadeira elegância está na simplicidade intencional."'
   },
 
-  brandSection: {
-    sectionNumber: '02',
-    title: 'Marca',
-    missionTitle: 'Missão',
-    missionText: 'Elevar o comum ao extraordinário através de experiências visuais que transcendem expectativas.',
-    valuesTitle: 'Valores',
-    values: [
-      { title: 'Excelência', description: 'Comprometidos com os mais altos padrões em cada detalhe.' },
-      { title: 'Autenticidade', description: 'Fiéis à nossa essência, sem comprometer a nossa visão.' },
-    ]
-  },
-
-  personas: {
+  // --- ESTRATÉGIA DINÂMICA (Lista de Cards) ---
+  brandStrategy: {
     sectionNumber: '03',
-    title: 'Público-alvo / Persona',
-    items: [
-      { number: '01', title: 'CONSTRUTOR', description: 'Foco em grandes obras.', image: '' },
-      { number: '02', title: 'PROPRIETÁRIO', description: 'Busca valorização.', image: '' },
+    title: 'Estratégia',
+    cards: [
+      {
+        id: 'default-identity',
+        type: 'identity',
+        title: 'Identidade Corporativa',
+        mission: { title: 'Missão', description: 'Elevar o padrão do mercado através de soluções inovadoras.' },
+        vision: { title: 'Visão', description: 'Ser referência mundial em nosso segmento até 2030.' },
+        values: { title: 'Valores', description: '• Inovação\n• Transparência\n• Excelência' },
+      },
+      {
+        id: 'default-market',
+        type: 'market',
+        title: 'Contexto de Mercado',
+        persona: { title: 'A Persona', description: 'Empreendedores visionários que buscam parceria estratégica.' },
+        pain: { title: 'A Dor', description: 'Dificuldade em encontrar parceiros que alinhem criatividade com resultados.' },
+        solution: { title: 'A Solução', description: 'Metodologia proprietária que integra design e dados.' },
+      }
     ]
   },
+  // --------------------------------------------
 
   identity: {
     sectionNumber: '04',
@@ -331,10 +343,8 @@ export const useBrandStore = create<BrandState>((set, get) => ({
   typography: {
     sectionNumber: '05',
     title: 'Tipografia',
-    
-    // AQUI ESTAVA O PROBLEMA - Fonte padrão agora é editável e a secundária está VAZIA
     primaryFontTitle: 'Fonte Principal',
-    primaryFontName: 'Outfit', // Apenas nome display
+    primaryFontName: 'Outfit', 
     primaryFontUrl: '', 
     primaryFontAlphabet: 'Aa Bb Cc',
     primaryFontCharacters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ\nabcdefghijklmnopqrstuvwxyz\n0123456789',
@@ -344,8 +354,6 @@ export const useBrandStore = create<BrandState>((set, get) => ({
       { name: 'Regular', weight: 400 },
       { name: 'Bold', weight: 700 },
     ],
-
-    // SECUNDÁRIA ZERADA
     secondaryFontTitle: 'Fonte Secundária',
     secondaryFontName: '', 
     secondaryFontUrl: '',
@@ -431,8 +439,41 @@ export const useBrandStore = create<BrandState>((set, get) => ({
   updateIndexSection: (data) => set((state) => ({ indexSection: { ...state.indexSection, ...data } })), 
   updateIntroduction: (data) => set((state) => ({ introduction: { ...state.introduction, ...data } })),
   updateAboutBrand: (data) => set((state) => ({ aboutBrand: { ...state.aboutBrand, ...data } })),
-  updateBrandSection: (data) => set((state) => ({ brandSection: { ...state.brandSection, ...data } })),
-  updatePersonas: (data) => set((state) => ({ personas: { ...state.personas, ...data } })),
+  
+  // ACTIONS DA ESTRATÉGIA (DINÂMICA)
+  updateBrandStrategy: (data) => set((state) => ({ brandStrategy: { ...state.brandStrategy, ...data } })),
+  
+  addStrategyCard: (type) => set((state) => {
+    const newCard: StrategyCard = {
+      id: crypto.randomUUID(), 
+      type,
+      title: type === 'identity' ? 'Nova Identidade' : type === 'market' ? 'Novo Contexto' : 'Novo Texto',
+      // Preenche defaults vazios
+      mission: { title: 'Missão', description: '' },
+      vision: { title: 'Visão', description: '' },
+      values: { title: 'Valores', description: '' },
+      persona: { title: 'Persona', description: '' },
+      pain: { title: 'Dor', description: '' },
+      solution: { title: 'Solução', description: '' },
+      textBody: ''
+    };
+    return { brandStrategy: { ...state.brandStrategy, cards: [...state.brandStrategy.cards, newCard] } };
+  }),
+
+  removeStrategyCard: (id) => set((state) => ({
+    brandStrategy: {
+      ...state.brandStrategy,
+      cards: state.brandStrategy.cards.filter(c => c.id !== id)
+    }
+  })),
+
+  updateStrategyCard: (id, data) => set((state) => ({
+    brandStrategy: {
+      ...state.brandStrategy,
+      cards: state.brandStrategy.cards.map(card => card.id === id ? { ...card, ...data } : card)
+    }
+  })),
+
   updateIdentity: (data) => set((state) => ({ identity: { ...state.identity, ...data } })),
   updateTypography: (data) => set((state) => ({ typography: { ...state.typography, ...data } })),
   updateColors: (data) => set((state) => ({ colors: { ...state.colors, ...data } })),
@@ -446,20 +487,6 @@ export const useBrandStore = create<BrandState>((set, get) => ({
     const newList = [...state.introduction.contentList];
     newList.splice(index, 1);
     return { introduction: { ...state.introduction, contentList: newList } };
-  }),
-
-  addBrandValue: () => set((state) => ({ brandSection: { ...state.brandSection, values: [...state.brandSection.values, { title: "Novo Valor", description: "Descrição" }] } })),
-  removeBrandValue: (index) => set((state) => {
-    const newList = [...state.brandSection.values];
-    newList.splice(index, 1);
-    return { brandSection: { ...state.brandSection, values: newList } };
-  }),
-
-  addPersonaItem: () => set((state) => ({ personas: { ...state.personas, items: [...state.personas.items, { number: '00', title: 'NOVA PERSONA', description: 'Descrição', image: '' }] } })),
-  removePersonaItem: (index) => set((state) => {
-    const newList = [...state.personas.items];
-    newList.splice(index, 1);
-    return { personas: { ...state.personas, items: newList } };
   }),
 
   addColor: () => set((state) => ({ colors: { ...state.colors, primaryColors: [...state.colors.primaryColors, { name: "Nova Cor", hex: "#000000", usage: "Uso" }] } })),
@@ -511,7 +538,18 @@ export const useBrandStore = create<BrandState>((set, get) => ({
 
   saveProject: async (slug: string) => {
     const state = get();
-    const { isEditorMode, toggleEditorMode, updateHero, updateIndexSection, updateIntroduction, updateAboutBrand, updateBrandSection, updatePersonas, updateIdentity, updateTypography, updateColors, updateApplication, updateDownloads, updateCredits, updateNavigation, addIntroductionTopic, removeIntroductionTopic, addBrandValue, removeBrandValue, addPersonaItem, removePersonaItem, addColor, removeColor, addColorGuideline, removeColorGuideline, addApplicationItem, removeApplicationItem, addDownloadItem, removeDownloadItem, addTeamMember, removeTeamMember, loadProject, saveProject, ...projectData } = state;
+    // Destructure para remover funções antes de salvar
+    const { 
+        isEditorMode, toggleEditorMode, updateHero, updateIndexSection, updateIntroduction, 
+        updateAboutBrand, updateBrandStrategy, addStrategyCard, removeStrategyCard, updateStrategyCard, 
+        updateIdentity, updateTypography, 
+        updateColors, updateApplication, updateDownloads, updateCredits, updateNavigation, 
+        addIntroductionTopic, removeIntroductionTopic, addColor, removeColor, 
+        addColorGuideline, removeColorGuideline, addApplicationItem, removeApplicationItem, 
+        addDownloadItem, removeDownloadItem, addTeamMember, removeTeamMember, 
+        loadProject, saveProject, 
+        ...projectData 
+    } = state;
 
     try {
       await api.post(`/project/${slug}`, { settings: projectData });
